@@ -2,20 +2,20 @@ version: '2'
 services:
   nginx:
     build:
-      context: ./
+      context: ./backend
       dockerfile: docker/nginx/nginx.docker
     volumes:
-      - ./:/var/www
+      - ./backend:/var/www
     ports:
       - "8000:80"
     links:
       - php-fpm
   php-fpm:
     build:
-      context: ./
+      context: ./backend
       dockerfile: docker/php/php-fpm.docker
     volumes:
-      - ./:/var/www
+      - ./backend:/var/www
     links:
       - mysql
     environment:
@@ -25,10 +25,10 @@ services:
       - "DB_HOST=mysql"
   php-cli:
     build:
-      context: ./
+      context: ./backend
       dockerfile: docker/php/php-cli.docker
     volumes:
-      - ./:/var/www
+      - ./backend:/var/www
     links:
       - mysql
     environment:
@@ -38,7 +38,7 @@ services:
   mysql:
     image: mysql:5.7
     volumes:
-      - ./storage/docker/mysql:/var/lib/mysql
+      - ./backend/storage/docker/mysql:/var/lib/mysql
     environment:
       - "MYSQL_ROOT_PASSWORD=secret"
       - "MYSQL_USER=app"
@@ -49,6 +49,13 @@ services:
   node:
     image: node:16.13.2-slim
     volumes:
-      - ./:/var/www
+      - ./backend:/var/www
     working_dir: /var/www
+    tty: true
+  vue:
+    build:
+      context: ./frontend
+      dockerfile: docker/vue-app.docker
+    ports:
+      - 5173:8080
     tty: true

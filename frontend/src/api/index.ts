@@ -23,10 +23,3 @@ api.interceptors.response.use(config => {
   }
   throw error
 })
-
-api.interceptors.request.use((config) => {
-  const token = decodeURIComponent(document.cookie.replace('XSRF-TOKEN=', ''));
-  api.defaults.headers['X-XSRF-TOKEN'] = token;
-
-  return config;
-});
