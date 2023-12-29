@@ -3,25 +3,39 @@
 namespace App\Services;
 
 /**
- * Class BitrixService to interact with Bitrix24 API
+ * Class Bitrix24Service
+ *
+ * The Bitrix24Service class provides methods to interact with the Bitrix24 API.
+ * It allows you to invoke Bitrix methods and perform analytics calculations on leads and deals.
+ *
  * @package App\Services
  */
 class Bitrix24Service
 {
+  /**
+   * @var string $uri The base URI for Bitrix24 API requests.
+   */
   private string $uri;
 
-  public function __construct($uri)
+  /**
+   * Bitrix24Service constructor.
+   *
+   * @param string $uri The Bitrix24 API URI.
+   */
+  public function __construct(string $uri)
   {
     $this->uri = $uri;
   }
 
   /**
-   * Calls Bitrix24 method (for example crm.lead.list)
-   * @param $method Bitrix24 method
-   * @param $data data provided for the method
-   * @return mixed result of method invocation
+   * Invoke a Bitrix24 API method with the given parameters.
+   *
+   * @param string $method The Bitrix24 API method to invoke (for example crm.lead.list).
+   * @param array $data The parameters to pass to the API method.
+   *
+   * @return string|array The JSON response from the Bitrix24 API.
    */
-  public function invokeBitrixMethod($method, $data)
+  public function invokeBitrixMethod(string $method, array $data):string|array
   {
     $webhook_uri = $this->uri.$method;
     $query_params = http_build_query($data);
@@ -40,10 +54,12 @@ class Bitrix24Service
   }
 
   /**
-   * Calculates analytics
-   * @return mixed data feed to send to frontend
+   * Calculate analytics based on leads and deals data from Bitrix24.
+   *
+   * @return array An array containing calculated analytics data.
    */
-  public function calculateAnalytics(){
+  public function calculateAnalytics():array
+  {
     $leads = $this->invokeBitrixMethod('crm.lead.list.json', [
       'select' => ['ID', 'STATUS_SEMANTIC_ID', 'UF_CRM_1702887958251']
     ]);
@@ -52,8 +68,13 @@ class Bitrix24Service
       'select' => ['ID', 'OPPORTUNITY', 'STAGE_SEMANTIC_ID', 'UF_CRM_1702888018563', 'UF_CRM_1702915796704']
     ]);
 
-    if (isset($leads['error']) || isset($deals['error'])) {
-      $message = 'Error occurred while getting data';
+    if (is_array($leads) && array_key_exists('error', $leads)) {
+      $message = 'Error occurred while getting data from leads';
+      abort(500, $message);
+    }
+
+    if (is_array($deals) && array_key_exists('error', $deals)) {
+      $message = 'Error occurred while getting data from deals';
       abort(500, $message);
     }
 
@@ -124,7 +145,7 @@ class Bitrix24Service
     $total['roi'] = floor(($total['income'] / ($total['revenue'] - $total['income'])) * 100);
     $total['name'] = 'Итого/Среднее';
 
-    array_push($result, $total);
+    $result[] = $total;
 
     usort($result, function($a, $b){
       if ($a['sales'] == $b['sales']) {

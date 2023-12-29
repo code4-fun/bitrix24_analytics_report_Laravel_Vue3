@@ -33,7 +33,7 @@ const authStore = useAuthStore()
 
     <footer class="footer">
       <div class="container">
-        &copy; Bigrix24 analytics 2023
+        &copy; Bitrix24 analytics 2023
       </div>
     </footer>
   </div>
