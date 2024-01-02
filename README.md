@@ -12,6 +12,8 @@
 
 - Docker
 
+- TypeScript
+
 ## Задача
 
 Стек: Laravel + Vue.js
