@@ -1,26 +1,26 @@
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/authStore'
+import {useAuthStore} from '@/stores/authStore'
 import {onMounted} from "vue";
 
 const authStore = useAuthStore()
 
-const submitHandler = e => {
+const submitHandler = (e: Event) => {
   authStore.loading = true
-  const form = e.target
+  const form = e.target as HTMLFormElement
   authStore.registerHandler({
-    name: form.name.value,
+    name: form.userName.value,
     email: form.email.value,
     password: form.password.value,
     password_confirmation: form.password_confirmation.value
   })
-  form.name.value = ''
+  form.userName.value = ''
   form.email.value = ''
   form.password.value = ''
   form.password_confirmation.value = ''
 }
 
 onMounted(async () => {
-  authStore.errors = []
+  authStore.errors = {}
 })
 </script>
 
@@ -28,25 +28,31 @@ onMounted(async () => {
   <div class="loader" v-if="authStore.loading" />
   <form v-else class="form_container" @submit.prevent='submitHandler' autoComplete="off">
     <div>
-      <input name="name" type="text" placeholder="Name" />
+      <input name="userName" type="text" placeholder="Name" />
       <div v-if="authStore.errors?.name" class="error-msg">
-        {{authStore.errors?.name[0]}}
+        {{ authStore.errors?.name?.[0] }}
       </div>
     </div>
     <div>
       <input name="email" type="text" placeholder="Email" />
       <div v-if="authStore.errors?.email" class="error-msg">
-        {{authStore.errors?.email[0]}}
+        {{ authStore.errors?.email?.[0] }}
       </div>
     </div>
     <div>
       <input name="password" type="text" placeholder="Password" />
       <div v-if="authStore.errors?.password" class="error-msg">
-        {{authStore.errors?.password[0]}}
+        {{ authStore.errors?.password?.[0] }}
       </div>
     </div>
     <input name="password_confirmation" type="text" placeholder="Password Confirmation" />
     <input type="submit" value="Register" />
+    <div class="form-bottom-links">
+      <div class="sign-in">
+        Already have an account?
+        <RouterLink to='/login'>Sign in</RouterLink>
+      </div>
+    </div>
   </form>
 </template>
 

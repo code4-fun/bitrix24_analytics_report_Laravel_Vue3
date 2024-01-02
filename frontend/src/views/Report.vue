@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
-import { useBitrix24Store } from '@/stores/bitrix24Store'
+import {onMounted} from 'vue'
+import {useBitrix24Store} from '@/stores/bitrix24Store'
 import ReportLine from './ReportLine.vue'
 
 const bitrix24Store = useBitrix24Store()
@@ -27,9 +27,10 @@ onMounted(async () => {
     </thead>
 
     <tbody>
+      <ReportLine :line="bitrix24Store.reportDataTotal" />
       <ReportLine
-        v-for="line of bitrix24Store.reportData"
-        :key="line.id"
+        v-for="(line, index) of bitrix24Store.reportData"
+        :key="`${index}-${line.name}`"
         :line="line" />
     </tbody>
   </table>

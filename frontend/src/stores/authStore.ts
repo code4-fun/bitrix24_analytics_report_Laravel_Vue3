@@ -1,90 +1,155 @@
-import { ref, watch } from 'vue'
-import type { Ref } from 'vue'
-import { defineStore } from 'pinia'
-import { getTokenApi, getUserApi, loginApi, registerApi, logoutApi } from '@/api/auth'
+import {ref, watch} from 'vue'
+import {defineStore} from 'pinia'
+import {
+  getTokenApi,
+  getUserApi,
+  loginApi,
+  registerApi,
+  logoutApi,
+  forgotPasswordApi,
+  resetPasswordApi
+} from '@/api/auth'
 import router from '@/router'
-import type { IUser } from '@/types'
-import type { AxiosResponse } from "axios";
+import type {
+  ApiDataResponse,
+  ApiStatusResponse,
+  AuthData,
+  AuthStore,
+  IUser,
+  ResetPasswordData
+} from '@/types'
+import {isValidationError} from "@/types";
 
 export const useAuthStore = defineStore('authStore', () => {
-  const user: Ref<IUser> = ref(null)
-  const errors = ref([])
-  const loading = ref(false)
+  const state: AuthStore = {
+    user: ref(null),
+    errors: ref({}),
+    status: ref(null),
+    loading: ref(false),
+  }
 
   const userInLocalStorage = localStorage.getItem("user")
 
   if (userInLocalStorage) {
-    user.value = JSON.parse(userInLocalStorage)._value
+    state.user.value = JSON.parse(userInLocalStorage)._value
   }
 
   watch(
-    () => user,
+    () => state.user,
     newState => localStorage.setItem("user", JSON.stringify(newState)),
     { deep: true }
   )
 
   const getToken = async () => {
-    await getTokenApi('/sanctum/csrf-cookie')
+    await getTokenApi({
+      uri: '/sanctum/csrf-cookie'
+    })
   }
 
   const getUser = async () => {
-    const data = await getUserApi<AxiosResponse<IUser>>('/api/user')
-    user.value = data.data
+    const response: ApiDataResponse<IUser> = await getUserApi({
+      uri: '/api/user'
+    })
+    state.user.value = response.data || null
   }
 
-  const loginHandler = async data => {
-    errors.value = []
+  const loginHandler = async (data: AuthData) => {
+    state.errors.value = {}
     await getToken()
     try {
-      await loginApi('/login', {
-        email: data.email,
-        password: data.password
+      await loginApi({
+        uri: '/login',
+        body: {...data}
       })
       await getUser()
-      router.push({name: data.to})
+      await router.push({name: data.to})
     } catch (e) {
-      if (e.response.status === 422) {
-        errors.value = e.response.data.errors
+      if (isValidationError(e)) {
+        state.errors.value = e.response.data.errors
+      } else {
+        console.error('An unexpected error occurred', (e as Error).message)
       }
     } finally {
-      loading.value = false
+      state.loading.value = false
     }
   }
 
-  const registerHandler = async data => {
-    errors.value = []
-    await getToken()
+  const registerHandler = async (data: AuthData) => {
+    state.errors.value = {}
+    // await getToken()
     try {
-      await registerApi('/register', {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-        password_confirmation: data.password_confirmation
+      await registerApi({
+        uri: '/register',
+        body: {...data}
       })
       await getUser()
-      router.push('/')
+      await router.push('/')
     } catch (e) {
-      if (e.response.status === 422) {
-        errors.value = e.response.data.errors
+      if (isValidationError(e)) {
+        state.errors.value = e.response.data.errors
+      } else {
+        console.error('An unexpected error occurred', (e as Error).message)
       }
     } finally {
-      loading.value = false
+      state.loading.value = false
     }
   }
 
   const logoutHandler = async () => {
-    await logoutApi('/logout')
-    user.value = null
-    router.push('/')
+    await logoutApi({
+      uri: '/logout'
+    })
+    state.user.value = null
+    await router.push('/')
+  }
+
+  const forgotPasswordHandler = async (email: string) => {
+    state.errors.value = {}
+    try{
+      const response: ApiStatusResponse = await forgotPasswordApi({
+        uri: '/forgot-password',
+        body: {
+          email: email
+        }
+      })
+      state.status.value = response.status ?? null
+    } catch(e){
+      if (isValidationError(e)) {
+        state.errors.value = e.response.data.errors
+      } else {
+        console.error('An unexpected error occurred', (e as Error).message)
+      }
+    } finally {
+      state.loading.value = false
+    }
+  }
+
+  const resetPasswordHandler = async (data: ResetPasswordData) => {
+    state.errors.value = {}
+    try{
+      const response: ApiStatusResponse = await resetPasswordApi({
+        uri: '/reset-password',
+        body: {...data}
+      })
+      state.status.value = response.status ?? null
+    } catch(e){
+      if (isValidationError(e)) {
+        state.errors.value = e.response.data.errors
+      } else {
+        console.error('An unexpected error occurred', (e as Error).message)
+      }
+    } finally {
+      state.loading.value = false
+    }
   }
 
   return {
-    user,
-    errors,
-    loading,
+    ...state,
     getUser,
     loginHandler,
     registerHandler,
-    logoutHandler
+    logoutHandler,
+    forgotPasswordHandler,
+    resetPasswordHandler
   }
 })

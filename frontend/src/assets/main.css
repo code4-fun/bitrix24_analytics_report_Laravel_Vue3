@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+
 :root {
   --primary-color: hsl(235, 50%, 67%);
   --primary-color-hover: hsl(235, 50%, 73%);
@@ -60,7 +62,7 @@ body,
   cursor: pointer;
 }
 .form_container {
-  max-width: 300px;
+  max-width: 350px;
   padding: 20px;
   margin: auto;
   display: flex;
@@ -103,7 +105,7 @@ input[type="submit"]:active {
 }
 .error-msg {
   color: var(--danger-color);
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .error-msg.top-error-msg {
   margin-bottom: 12px;
@@ -125,4 +127,28 @@ input[type="submit"]:active {
   to {
     transform: rotate(360deg);
   }
+}
+/* Form bottom links */
+.form-bottom-links {
+  margin: 0 auto;
+  font-weight: 500;
+}
+.form-bottom-links > *:not(:last-child) {
+  margin-bottom: 10px;
+}
+.form-bottom-links a {
+  text-decoration: none;
+  color: hsl(235, 100%, 60%);
+}
+.form-bottom-links a:hover {
+  text-decoration: underline;
+}
+.form-bottom-links .forgot-password {
+  text-align: center;
+}
+/* Forgot password popup */
+.forgot-password-popup {
+  padding: 10px;
+  background-color: lightgreen;
+  font-weight: 500;
 }

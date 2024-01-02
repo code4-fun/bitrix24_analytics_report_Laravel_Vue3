@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import {createRouter, createWebHistory} from 'vue-router'
 import type { RouteRecordRaw, RouterOptions } from 'vue-router'
 import Layout from '../components/Layout.vue'
 import HomeView from '../views/HomeView.vue'
@@ -19,7 +19,7 @@ const routes = <Array<RouteRecordRaw>>[
       {path: 'login', name: 'login', component: LoginView},
       {path: 'register', name: 'register', component: RegisterView},
       {path: 'forgot-password', name: 'forgot-password', component: ForgotPasswordView},
-      {path: 'reset-password/:token', name: 'reset-password', component: ResetPasswordView}
+      {path: 'password-reset/:token', name: 'reset-password', component: ResetPasswordView}
     ]
   },
   {path: '/:pathMatch(.*)*', redirect : 'home'}
@@ -37,7 +37,7 @@ router.beforeEach((to, from, next) => {
     next({
       name: 'login',
       query: {
-        from: to.name
+        from: to.name as string
       }
     })
   } else {

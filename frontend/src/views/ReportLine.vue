@@ -1,10 +1,9 @@
 <script setup lang="ts">
-defineProps({
-  line: {
-    type: Object,
-    required: true,
-    default: () => {},
-  }
+import {defineProps} from 'vue'
+import type {ReportLine} from "@/types"
+
+withDefaults(defineProps<{line: ReportLine}>(), {
+  line: () => ({} as ReportLine)
 })
 </script>
 
@@ -14,9 +13,9 @@ defineProps({
     <td>{{ line.orders }}</td>
     <td>{{ line.conversion ? `${line.conversion} %` : '-' }}</td>
     <td>{{ line.sales ? line.sales : '-'}}</td>
-    <td>{{ line.revenue ? `${line.revenue} &#x20bd;` : '-'}}</td>
-    <td>{{ line.average ? `${line.average} &#x20bd;` : '-'}}</td>
-    <td>{{ line.income ? `${line.income} &#x20bd;` : '-'}}</td>
+    <td>{{ line.revenue ? `${parseInt(line.revenue).toLocaleString('ru-Ru')} &#x20bd;` : '-'}}</td>
+    <td>{{ line.average ? `${parseInt(line.average).toLocaleString('ru-Ru')} &#x20bd;` : '-'}}</td>
+    <td>{{ line.income ? `${parseInt(line.income).toLocaleString('ru-Ru')} &#x20bd;` : '-'}}</td>
     <td>{{ line.roi ? `${line.roi} %` : '' }}</td>
   </tr>
 </template>

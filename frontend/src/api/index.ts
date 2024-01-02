@@ -8,18 +8,18 @@ const api = axios.create({
   withXSRFToken: true
 })
 
-export function makeRequest(url, options?){
-  return api(url, options)
-    .then(res => res.data)
+export async function makeRequest<T>(url: string, options?: any): Promise<T> {
+  let res = await api(url, options)
+  return await res.data
 }
 
 api.interceptors.response.use(config => {
   return config
 }, async error => {
-  if(error.response.status === 401){
+  if(error.response.status === 401 || error.response.status === 419){
     const authStore = useAuthStore()
     authStore.user = null
-    router.push('/login')
+    await router.push('/login')
   }
   throw error
 })
