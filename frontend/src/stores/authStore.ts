@@ -76,7 +76,6 @@ export const useAuthStore = defineStore('authStore', () => {
 
   const registerHandler = async (data: AuthData) => {
     state.errors.value = {}
-    // await getToken()
     try {
       await registerApi({
         uri: '/register',

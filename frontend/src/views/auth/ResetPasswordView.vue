@@ -18,7 +18,7 @@ const submitHandler = (e: Event) => {
   form.password_confirmation.value = ''
 }
 
-onMounted(async () => {
+onMounted(() => {
   authStore.errors = {}
   authStore.status = null
 })

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import {useAuthStore} from '@/stores/authStore'
+import {useBitrix24Store} from '@/stores/bitrix24Store'
 
 const authStore = useAuthStore()
+const bitrix24Store = useBitrix24Store()
 </script>
 
 <template>
@@ -26,6 +28,10 @@ const authStore = useAuthStore()
     </header>
 
     <main class="page">
+      <div :class="['integration_message', bitrix24Store.integrationStatus === 200 ? 'success' : 'failure']"
+           v-if="bitrix24Store.integrationMessage">
+        {{ bitrix24Store.integrationMessage }}
+      </div>
       <div class="main_container container">
         <router-view/>
       </div>
@@ -88,5 +94,19 @@ const authStore = useAuthStore()
 .footer {
   text-align: center;
   padding: 10px 0;
+}
+.integration_message {
+  position: absolute;
+  top: 51px;
+  left: 1px;
+  padding: 10px;
+  margin-right: 10px;
+  font-size: 18px;
+}
+.integration_message.success {
+  background-color: var(--success-color);
+}
+.integration_message.failure {
+  background-color: var(--failure-color);
 }
 </style>

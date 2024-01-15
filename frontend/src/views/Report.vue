@@ -1,17 +1,28 @@
 <script setup lang="ts">
-import {onMounted} from 'vue'
+import {onMounted, onUnmounted} from 'vue'
 import {useBitrix24Store} from '@/stores/bitrix24Store'
 import ReportLine from './ReportLine.vue'
+import type {ReportLine as ReportLineType} from "@/types"
 
 const bitrix24Store = useBitrix24Store()
 
 onMounted(async () => {
   await bitrix24Store.fetchReportData()
 })
+
+onUnmounted(() => {
+  bitrix24Store.reportMessage = ''
+  bitrix24Store.reportStatus = 0
+  bitrix24Store.reportData = []
+  bitrix24Store.reportDataTotal = {}
+})
 </script>
 
 <template>
-  <div class="loader" v-if="bitrix24Store.loading" />
+  <div v-if="bitrix24Store.loading" class="loader" />
+  <div v-else-if="bitrix24Store.reportStatus === 500" class="page_content">
+    {{ bitrix24Store.reportMessage }}
+  </div>
   <table v-else class="table">
     <thead>
       <tr>
@@ -27,14 +38,13 @@ onMounted(async () => {
     </thead>
 
     <tbody>
-      <ReportLine :line="bitrix24Store.reportDataTotal" />
+      <ReportLine :line="bitrix24Store.reportDataTotal as ReportLineType" />
       <ReportLine
         v-for="(line, index) of bitrix24Store.reportData"
         :key="`${index}-${line.name}`"
         :line="line" />
     </tbody>
   </table>
-
 </template>
 
 <style>

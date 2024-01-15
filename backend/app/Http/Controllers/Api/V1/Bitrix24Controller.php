@@ -9,14 +9,57 @@ use Illuminate\Http\Request;
 
 class Bitrix24Controller extends Controller
 {
+  private Bitrix24Service $bitrix24Service;
+
+  public function __construct(Bitrix24Service $bitrix24Service)
+  {
+    $this->bitrix24Service = $bitrix24Service;
+  }
+
   /**
    * Display a listing of the resource.
    */
-  public function index()
+  public function report()
   {
-    $bx = new Bitrix24Service(config('custom.BX_URI'));
-    $result = $bx->calculateAnalytics();
-    return json_encode($result);
+    $result = $this->bitrix24Service->calculateAnalytics();
+    return json_encode(['data' => $result]);
+  }
+
+  /**
+   * Set up integration.
+   */
+  public function integrate()
+  {
+    $data = request()->only([
+      'webhookName',
+      'webhookUrl',
+      'leadDailygrow',
+      'dealDailygrow',
+      'dealCost'
+    ]);
+
+    $validatedData = request()->validate([
+      'webhookName' => 'required|string|max:50|unique:webhooks,name',
+      'webhookUrl' => 'required|url|max:200',
+      'leadDailygrow' => 'required|string|max:50',
+      'dealDailygrow' => 'required|string|max:50',
+      'dealCost' => 'required|string|max:50',
+    ], [
+      'webhookName.unique' => 'This integration has already been set up.'
+    ]);
+
+    $result = $this->bitrix24Service->makeIntegration($validatedData);
+    return json_encode(['data' => $result]);
+  }
+
+  /**
+   * Remove integration.
+   */
+  public function removeIntegration()
+  {
+    $webhookName = request()->input('webhookName');
+    $result = $this->bitrix24Service->removeIntegration($webhookName);
+    return json_encode(['data' => $result]);
   }
 
   /**

@@ -17,7 +17,7 @@ const submitHandler = (e: Event) => {
   form.password.value = ''
 }
 
-onMounted(async () => {
+onMounted(() => {
   authStore.errors = {}
 })
 </script>
@@ -35,7 +35,7 @@ onMounted(async () => {
       </div>
     </div>
     <div>
-      <input name="password" type="text" placeholder="Password" />
+      <input name="password" type="password" placeholder="Password" />
       <div v-if="authStore.errors?.password" class="error-msg">
         {{ authStore.errors?.password?.[0] }}
       </div>

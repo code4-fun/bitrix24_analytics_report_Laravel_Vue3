@@ -18,5 +18,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth:sanctum'])->get('/user', [UserController::class, 'show']);
 
 Route::group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers\Api\V1', 'middleware' => 'auth:sanctum'], function(){
-  Route::apiResource('report', Bitrix24Controller::class);
+  Route::get('report', [Bitrix24Controller::class, 'report']);
+  Route::post('integrate', [Bitrix24Controller::class, 'integrate']);
+  Route::delete('remove-integration', [Bitrix24Controller::class, 'removeIntegration']);
 });

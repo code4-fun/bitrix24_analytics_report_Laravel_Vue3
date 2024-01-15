@@ -12,15 +12,9 @@ class User extends Authenticatable
 {
   use HasApiTokens, HasFactory, Notifiable;
 
-
-  public function groups()
+  public function webhooks()
   {
-    return $this->hasMany(Group::class);
-  }
-
-  public function passwords()
-  {
-    return $this->belongsToMany(Password::class);
+    return $this->hasMany(Webhook::class);
   }
 
   /**

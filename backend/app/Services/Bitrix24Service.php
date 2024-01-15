@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Exceptions\IntegrationException;
+use App\Exceptions\ReportException;
+use Exception;
+
 /**
  * Class Bitrix24Service
  *
@@ -13,21 +17,6 @@ namespace App\Services;
 class Bitrix24Service
 {
   /**
-   * @var string $uri The base URI for Bitrix24 API requests.
-   */
-  private string $uri;
-
-  /**
-   * Bitrix24Service constructor.
-   *
-   * @param string $uri The Bitrix24 API URI.
-   */
-  public function __construct(string $uri)
-  {
-    $this->uri = $uri;
-  }
-
-  /**
    * Invoke a Bitrix24 API method with the given parameters.
    *
    * @param string $method The Bitrix24 API method to invoke (for example crm.lead.list).
@@ -35,9 +24,9 @@ class Bitrix24Service
    *
    * @return string|array The JSON response from the Bitrix24 API.
    */
-  public function invokeBitrixMethod(string $method, array $data):string|array
+  public function invokeBitrixMethod(string $webhook, string $method, array $data):string|array
   {
-    $webhook_uri = $this->uri.$method;
+    $webhook_uri = $webhook.$method;
     $query_params = http_build_query($data);
     $curl = curl_init();
     curl_setopt_array($curl, array(
@@ -57,60 +46,69 @@ class Bitrix24Service
    * Calculate analytics based on leads and deals data from Bitrix24.
    *
    * @return array An array containing calculated analytics data.
+   * @throws ReportException
    */
   public function calculateAnalytics():array
   {
-    $leads = $this->invokeBitrixMethod('crm.lead.list.json', [
-      'select' => ['ID', 'STATUS_SEMANTIC_ID', 'UF_CRM_1702887958251']
+    $webhook = auth()->user()->webhooks()->where('name', 'report_integration')->first();
+
+    if (!$webhook) {
+      throw new ReportException('There is no integration set up to generate Analytics report');
+    }
+
+    $leadDailygrow = $webhook->customFields()->where('name', 'leadDailygrow')->first()['identifier'];
+    $dealDailygrow = $webhook->customFields()->where('name', 'dealDailygrow')->first()['identifier'];
+    $dealCost = $webhook->customFields()->where('name', 'dealCost')->first()['identifier'];
+
+    $leads = $this->invokeBitrixMethod(url($webhook->uri . '/'),  'crm.lead.list.json', [
+      'select' => ['ID', 'STATUS_SEMANTIC_ID', $leadDailygrow]
     ]);
 
-    $deals = $this->invokeBitrixMethod('crm.deal.list.json', [
-      'select' => ['ID', 'OPPORTUNITY', 'STAGE_SEMANTIC_ID', 'UF_CRM_1702888018563', 'UF_CRM_1702915796704']
+    $deals = $this->invokeBitrixMethod(url($webhook->uri . '/'),  'crm.deal.list.json', [
+      'select' => ['ID', 'OPPORTUNITY', 'STAGE_SEMANTIC_ID', $dealDailygrow, $dealCost]
     ]);
 
     if (is_array($leads) && array_key_exists('error', $leads)) {
-      $message = 'Error occurred while getting data from leads';
-      abort(500, $message);
+      throw new ReportException();
     }
 
     if (is_array($deals) && array_key_exists('error', $deals)) {
-      $message = 'Error occurred while getting data from deals';
-      abort(500, $message);
+      throw new ReportException();
     }
 
     $result = [];
     $summary = [];
 
     foreach ($deals['result'] as $item){
-      if(!array_key_exists($item['UF_CRM_1702888018563'], $summary)){
-        $summary[$item['UF_CRM_1702888018563']] = [];
+      if(!array_key_exists($item[$dealDailygrow], $summary)){
+        $summary[$item[$dealDailygrow]] = [];
         if($item['STAGE_SEMANTIC_ID'] == 'S'){
-          $summary[$item['UF_CRM_1702888018563']]['sales'] = 1;
+          $summary[$item[$dealDailygrow]]['sales'] = 1;
         } else {
-          $summary[$item['UF_CRM_1702888018563']]['sales'] = 0;
+          $summary[$item[$dealDailygrow]]['sales'] = 0;
         }
-        $summary[$item['UF_CRM_1702888018563']]['count'] = 1;
-        $summary[$item['UF_CRM_1702888018563']]['revenue'] = (float)$item['OPPORTUNITY'];
-        $summary[$item['UF_CRM_1702888018563']]['cost'] = (float)$item['UF_CRM_1702915796704'];
+        $summary[$item[$dealDailygrow]]['count'] = 1;
+        $summary[$item[$dealDailygrow]]['revenue'] = (float)$item['OPPORTUNITY'];
+        $summary[$item[$dealDailygrow]]['cost'] = (float)$item[$dealCost];
       } else {
         if($item['STAGE_SEMANTIC_ID'] == 'S'){
-          $summary[$item['UF_CRM_1702888018563']]['sales'] += 1;
+          $summary[$item[$dealDailygrow]]['sales'] += 1;
         }
-        $summary[$item['UF_CRM_1702888018563']]['count'] += 1;
-        $summary[$item['UF_CRM_1702888018563']]['revenue'] += (int)$item['OPPORTUNITY'];
-        $summary[$item['UF_CRM_1702888018563']]['cost'] += $item['UF_CRM_1702915796704'];
+        $summary[$item[$dealDailygrow]]['count'] += 1;
+        $summary[$item[$dealDailygrow]]['revenue'] += (int)$item['OPPORTUNITY'];
+        $summary[$item[$dealDailygrow]]['cost'] += $item[$dealCost];
       }
     }
 
     foreach ($leads['result'] as $item){
-      if(!array_key_exists($item['UF_CRM_1702887958251'], $summary)) {
-        $summary[$item['UF_CRM_1702887958251']] = [];
-        $summary[$item['UF_CRM_1702887958251']]['count'] = 1;
-        $summary[$item['UF_CRM_1702887958251']]['sales'] = 0;
-        $summary[$item['UF_CRM_1702887958251']]['revenue'] = 0;
-        $summary[$item['UF_CRM_1702887958251']]['cost'] = 0;
+      if(!array_key_exists($item[$leadDailygrow], $summary)) {
+        $summary[$item[$leadDailygrow]] = [];
+        $summary[$item[$leadDailygrow]]['count'] = 1;
+        $summary[$item[$leadDailygrow]]['sales'] = 0;
+        $summary[$item[$leadDailygrow]]['revenue'] = 0;
+        $summary[$item[$leadDailygrow]]['cost'] = 0;
       } else {
-        $summary[$item['UF_CRM_1702887958251']]['count'] += 1;
+        $summary[$item[$leadDailygrow]]['count'] += 1;
       }
     }
 
@@ -155,5 +153,52 @@ class Bitrix24Service
     });
 
     return $result;
+  }
+
+  /**
+   * Make a new integration by creating a webhook and associated custom fields.
+   *
+   * @param array $data Data for creating the integration.
+   *
+   * @return array An array containing the HTTP status code and a message.
+   * @throws IntegrationException
+   */
+  public function makeIntegration(array $data): array
+  {
+    try {
+      $webhook = auth()->user()->webhooks()->create([
+        'name' => $data['webhookName'],
+        'uri' => $data['webhookUrl']
+      ]);
+
+      $webhook->customFields()->createMany([
+        ['name' => 'leadDailygrow', 'identifier' => $data['leadDailygrow']],
+        ['name' => 'dealDailygrow', 'identifier' => $data['dealDailygrow']],
+        ['name' => 'dealCost', 'identifier' => $data['dealCost']]
+      ]);
+
+      return ['status' => 200, 'message' => 'Integration created successfully'];
+    } catch (Exception $e) {
+      throw new IntegrationException();
+    }
+  }
+
+  /**
+   * Remove integration by webhook name.
+   *
+   * @param  string $data The name of the webhook to be removed.
+   *
+   * @return array An associative array containing the status and message of the operation.
+   * @throws IntegrationException Thrown if an error occurs during integration removal.
+   */
+  public function removeIntegration(string $data): array
+  {
+    try {
+      auth()->user()->webhooks()->where('name', $data)->delete();
+
+      return ['status' => 200, 'message' => 'Integration removed successfully'];
+    } catch (Exception $e) {
+      throw new IntegrationException();
+    }
   }
 }

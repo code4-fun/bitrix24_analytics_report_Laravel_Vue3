@@ -13,7 +13,7 @@ const submitHandler = (e: Event) => {
   form.email.value = ''
 }
 
-onBeforeMount(async () => {
+onBeforeMount(() => {
   authStore.errors = {}
   authStore.status = null
 })

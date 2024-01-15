@@ -11,3 +11,10 @@ export const makeIntegrationApi = (request: ApiRequest): Promise<any> => {
     data: request.body
   })
 }
+
+export const removeIntegrationApi = (request: ApiRequest): Promise<any> => {
+  return makeRequest(request.uri, {
+    method: 'DELETE',
+    data: request.body
+  })
+}

@@ -5,6 +5,8 @@
   --primary-color-hover: hsl(235, 50%, 73%);
   --danger-color: hsl(351, 100%, 70%);
   --danger-color-hover: hsl(351, 100%, 76%);
+  --success-color: hsl(120, 73%, 75%);
+  --failure-color: hsl(9, 100%, 64%);
 }
 /* normalizing */
 *,
@@ -104,6 +106,8 @@ input[type="submit"]:active {
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 .error-msg {
+  font-size: 16px;
+  text-align: left;
   color: var(--danger-color);
   margin-top: 8px;
 }
@@ -120,6 +124,16 @@ input[type="submit"]:active {
   border-radius: 50%;
   animation: rotate 1.5s linear infinite;
 }
+.loader-small {
+  margin: auto;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+  border-top: 3px solid var(--primary-color);
+  border-right: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: rotate 1.5s linear infinite;
+}
 @keyframes rotate {
   from {
     transform: rotate(0deg);
@@ -130,7 +144,7 @@ input[type="submit"]:active {
 }
 /* Form bottom links */
 .form-bottom-links {
-  margin: 0 auto;
+  margin: auto;
   font-weight: 500;
 }
 .form-bottom-links > *:not(:last-child) {
@@ -149,6 +163,6 @@ input[type="submit"]:active {
 /* Forgot password popup */
 .forgot-password-popup {
   padding: 10px;
-  background-color: lightgreen;
+  background-color: var(--success-color);
   font-weight: 500;
 }
