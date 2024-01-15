@@ -1,3 +1,4 @@
+https://github.com/code4-fun/bitrix24_analytics_report_Laravel_Vue3/assets/72479131/b423d8ed-74f3-471e-9f59-e80200cef5e2
 
 
 ## Используемые технологии
